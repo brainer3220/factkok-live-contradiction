@@ -12,10 +12,11 @@ import dataclasses
 import json
 import os
 import subprocess
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 
 import yaml
 
@@ -71,6 +72,7 @@ class Take:
     date: str
     source_url: str
     venue: str
+    topic: str = ""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -105,7 +107,7 @@ class DemoConfig:
     threshold: float
     statements: tuple[dict[str, Any], ...]
     base_dir: Path
-    judge_model: str = "anthropic/claude-sonnet-5-5"
+    judge_model: str = "gpt-6-luna"
     judge_effort: str = "low"
     judge_timeout: int = 30
 
@@ -123,6 +125,7 @@ class DemoConfig:
                     date=str(past["date"]),
                     source_url=str(past["source_url"]),
                     venue=str(past.get("venue", "")),
+                    topic=str(statement.get("topic", "")),
                 )
             )
         return takes
@@ -169,7 +172,7 @@ def load_config(path: Path) -> DemoConfig:
         threshold=threshold,
         statements=tuple(statements),
         base_dir=path.parent,
-        judge_model=str(data.get("judge_model", "anthropic/claude-sonnet-5-5")),
+        judge_model=str(data.get("judge_model", "gpt-6-luna")),
         judge_effort=str(data.get("judge_effort", "low")),
         judge_timeout=judge_timeout,
     )
@@ -304,9 +307,7 @@ class CodexJudge:
         self._codex = codex or os.getenv("LIVE_DEMO_CODEX_BIN", "codex")
         self._model = model or os.getenv("LIVE_DEMO_CODEX_MODEL", "")
         self._timeout = timeout
-        if codex_home is not None:
-            # prepare_codex_home()가 CODEX_HOME에서 auth.json·config.toml을 복사한다.
-            os.environ["CODEX_HOME"] = str(codex_home)
+        self._codex_home = codex_home
 
     @staticmethod
     def ready() -> bool:
@@ -324,6 +325,7 @@ class CodexJudge:
                 output_filename="verdict.json",
                 codex_model=self._model,
                 timeout=self._timeout,
+                codex_home=self._codex_home,
             )
         except subprocess.TimeoutExpired:
             raise JudgeError("판정 시간 초과") from None
@@ -331,14 +333,16 @@ class CodexJudge:
             raise JudgeError(f"codex 판정 실패: {type(error).__name__}") from None
 
 
-def build_prompt(holder: str, segment_text: str, takes: list[Take]) -> str:
+def build_prompt(holder: str, segment_text: str, takes: list[Take], *, context: str = "") -> str:
     """판정 프롬프트. 과거 발언은 id와 함께 넣고 그중 하나만 고르게 한다."""
     lines = [
         "너는 한국어 정치 발언 비교 도우미다. 단정하지 말고 근거만 본다.",
         f"화자: {holder}",
         f"지금 발언: {segment_text}",
-        "같은 화자의 과거 발언 후보:",
     ]
+    if context:
+        lines.append(f"자료 맥락: {context}")
+    lines.append("같은 화자의 과거 발언 후보:")
     for take in takes:
         lines.append(f"- id={take.take_id} | {take.date} | {take.venue} | {take.text}")
     lines.extend(
@@ -346,6 +350,9 @@ def build_prompt(holder: str, segment_text: str, takes: list[Take]) -> str:
             "지금 발언과 가장 관련 있는 과거 발언 하나를 id로 고르고 관계를 판정하라.",
             "relation: contradiction(서로 반대), position_change(입장이 바뀜), "
             "consistent(같은 입장), unrelated(관련 없음).",
+            "contradiction은 같은 조건·시점·범위에서 양립할 수 없는 주장이다. "
+            "조건부 협상 양보나 선거가 달라진 공약 범위의 변화는 position_change로 구분한다. "
+            "정책의 영구 폐기나 거짓말로 단정하지 말고 조건과 범위를 rationale에 보존하라.",
             "confidence는 0~1. rationale은 한국어 한두 문장으로 두 발언의 차이를 설명한다.",
         ]
     )
@@ -382,7 +389,7 @@ def parse_verdict(raw: str, takes: list[Take], holder: str) -> Verdict:
 class Event:
     """화면이나 로그로 보낼 이벤트."""
 
-    kind: str  # card | log | banner | banner_clear
+    kind: str
     run_id: str
     payload: dict[str, Any]
 
@@ -397,50 +404,104 @@ class Pipeline:
         self._config = config
         self._store = store
         self._judge = judge
+        self._contexts = {
+            statement["current"]["segment_index"]: str(statement["current"].get("context", ""))
+            for statement in config.statements
+            if "current" in statement
+        }
         self.run_id = run_id
         self._banner_active = False
 
     def _event(self, kind: str, **payload: Any) -> Event:
         return Event(kind=kind, run_id=self.run_id, payload=payload)
 
-    def process(self, segment: Segment) -> list[Event]:
+    def process(
+        self,
+        segment: Segment,
+        on_event: Callable[[Event], None] | None = None,
+        *,
+        should_continue: Callable[[], bool] | None = None,
+    ) -> list[Event]:
+        """기존 결과 목록을 반환하고, callback에는 진행 중 이벤트도 즉시 보낸다."""
+        events: list[Event] = []
+
+        def publish(kind: str, **payload: Any) -> None:
+            event = self._event(kind, **payload)
+            events.append(event)
+            if on_event is not None:
+                on_event(event)
+
+        def progress(phase: str) -> None:
+            if on_event is not None:
+                on_event(self._event(
+                    "progress", segment_index=segment.index, phase=phase,
+                    provider=self._config.judge, model=self._config.judge_model,
+                ))
+
+        def stage(stage_name: str, message: str, **payload: Any) -> None:
+            if on_event is not None:
+                on_event(self._event(
+                    "log", segment_index=segment.index, stage=stage_name, message=message,
+                    provider=self._config.judge, model=self._config.judge_model, **payload,
+                ))
+
         holder = self._config.holder
         if segment.speaker != holder:
-            return [self._event("log", segment_index=segment.index, message="화자 제외")]
+            publish("log", segment_index=segment.index, message="화자 제외")
+            progress("skipped")
+            return events
 
-        events: list[Event] = []
+        progress("searching")
+        stage("search.start", "검색 시작", search_provider=self._store.label)
         try:
             takes = self._store.search(holder, segment.text, SEARCH_LIMIT)
         except StoreError as error:
+            stage("search.end", "검색 실패", status="failed", search_provider=self._store.label)
             if not self._banner_active:
                 self._banner_active = True
-                events.append(self._event("banner", message="기억 저장소에 연결하지 못했습니다"))
-            events.append(self._event("log", segment_index=segment.index, message=f"검색 실패: {error}"))
+                publish("banner", message="기억 저장소에 연결하지 못했습니다")
+            publish("log", segment_index=segment.index, message=f"검색 실패: {error}")
+            progress("failed")
             return events
+        stage("search.end", "검색 완료", status="completed", search_provider=self._store.label)
         if self._banner_active:
             self._banner_active = False
-            events.append(self._event("banner_clear"))
-        events.append(
-            self._event(
-                "log",
-                segment_index=segment.index,
-                message="검색 완료",
-                query=segment.text,
-                take_ids=[take.take_id for take in takes],
-            )
+            publish("banner_clear")
+        publish(
+            "log",
+            segment_index=segment.index,
+            message="검색 완료",
+            query=segment.text,
+            take_ids=[take.take_id for take in takes],
         )
         if not takes:
-            events.append(self._event("log", segment_index=segment.index, message="비교할 과거 발언 없음"))
+            publish("log", segment_index=segment.index, message="비교할 과거 발언 없음")
+            progress("skipped")
             return events
 
+        prompt = build_prompt(holder, segment.text, takes, context=self._contexts.get(segment.index, ""))
+        if should_continue is not None and not should_continue():
+            publish("log", segment_index=segment.index, message="종료된 실행의 판정 생략")
+            progress("skipped")
+            return events
+        progress("judging")
+        started = time.monotonic()
+        stage("judge.start", "판정 시작")
         try:
-            raw = self._judge.judge(build_prompt(holder, segment.text, takes))
+            raw = self._judge.judge(prompt)
             verdict = parse_verdict(raw, takes, holder)
         except (JudgeError, VerdictError) as error:
-            events.append(
-                self._event("log", segment_index=segment.index, message=f"판정을 완료하지 못했습니다: {error}")
+            stage(
+                "judge.end", "판정 실패", status="failed",
+                duration_ms=int((time.monotonic() - started) * 1000),
             )
+            publish("log", segment_index=segment.index, message=f"판정을 완료하지 못했습니다: {error}")
+            progress("failed")
             return events
+        stage(
+            "judge.end", "판정 완료", status="completed",
+            duration_ms=int((time.monotonic() - started) * 1000),
+        )
 
         summary = {
             "segment_index": segment.index,
@@ -449,20 +510,19 @@ class Pipeline:
             "statement_id": verdict.take.statement_id,
         }
         if verdict.relation in CARD_RELATIONS and verdict.confidence >= self._config.threshold:
-            events.append(
-                self._event(
-                    "card",
-                    **summary,
-                    title=CARD_TITLES[verdict.relation],
-                    now_text=segment.text,
-                    now_seconds=segment.start,
-                    past_text=verdict.take.text,
-                    past_date=verdict.take.date,
-                    past_venue=verdict.take.venue,
-                    past_url=verdict.take.source_url,
-                    rationale=verdict.rationale,
-                )
+            publish(
+                "card",
+                **summary,
+                title=CARD_TITLES[verdict.relation],
+                now_text=segment.text,
+                now_seconds=segment.start,
+                past_text=verdict.take.text,
+                past_date=verdict.take.date,
+                past_venue=verdict.take.venue,
+                past_url=verdict.take.source_url,
+                rationale=verdict.rationale,
             )
         else:
-            events.append(self._event("log", **summary, message="카드 기준 미달"))
+            publish("log", **summary, message="카드 기준 미달")
+        progress("completed")
         return events

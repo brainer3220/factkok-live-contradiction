@@ -1,0 +1,81 @@
+[
+  {
+    "statement_id": "yoon-impeachment-change",
+    "source_page": "https://imnews.imbc.com/news/2024/politics/article/6666421_36431.html",
+    "source_hls_url": "https://video.imnews.imbc.com/video/_definst_/imnews/video.imnews.imbc.com/news/2024/politics/article/__icsFiles/afieldfile/2024/12/12/joo241212_vo2.mp4/playlist.m3u8",
+    "source_mp4_filename": "joo241212_vo2.mp4",
+    "source_mp4_url": null,
+    "source_mp4_url_status": "공식 플레이어는 HLS URL만 제공한다. MP4 파일명은 HLS 경로에 표시된 이름이며 직접 다운로드 URL이 아니다.",
+    "broadcaster": "MBC",
+    "date": "2024-12-12",
+    "input": "han-dong-hoon-source.mp4",
+    "source_start": 15,
+    "source_end": 32,
+    "slot_seconds": 55,
+    "audio_channel": "stereo",
+    "output": "han-dong-hoon.mp4",
+    "editing": {
+      "source_segment_seconds": 17,
+      "freeze_last_frame_seconds": 38,
+      "audio_padding": "발언 구간 뒤 38초 무음",
+      "frame_changes": "원본 화면의 비율을 유지해 1194x672로 축소하고 1280x720 검정 여백에 배치했다. 화면을 자르지 않았다.",
+      "overlays": [
+        "자료 영상 · MBC · 2024-12-12 · 발언 뒤 정지 화면·무음",
+        "17초부터 실제 발언 종료 · 판정 대기 · 정지 화면과 무음 안내"
+      ],
+      "audio_changes": "원본의 양쪽 오디오 채널을 보존했다. AAC 48kHz 스테레오로 인코딩했다. 다른 인물의 음성이나 합성 음성을 추가하지 않았다.",
+      "video_encoding": "H.264 libx264, CRF 23, preset fast, yuv420p, 30fps, faststart"
+    },
+    "source_media": {
+      "acquisition": "공식 기사 HTML의 thisMovie1.file이 가리키는 공개 HLS를 FFmpeg로 재인코딩 없이 로컬 MP4에 remux",
+      "sha256": "1b641eed2fe31ecfdf11af49808ae3c666abb1d1666ee945083f6b0887ec139d",
+      "ffprobe": {
+        "duration_seconds": 120.697324,
+        "size_bytes": 38825632,
+        "video_codec": "h264",
+        "width": 1920,
+        "height": 1080,
+        "audio_codec": "aac",
+        "audio_sample_rate": 44100,
+        "audio_channels": 2,
+        "audio_channel_layout": "stereo"
+      }
+    },
+    "output_media": {
+      "sha256": "a306590a593b81bd80aaba0407c07b56ea4c245d188cc33cc14e3456e6790006",
+      "ffprobe": {
+        "duration_seconds": 55,
+        "size_bytes": 3251724,
+        "video_codec": "h264",
+        "width": 1280,
+        "height": 720,
+        "pixel_format": "yuv420p",
+        "frame_rate": "30/1",
+        "audio_codec": "aac",
+        "audio_sample_rate": 48000,
+        "audio_channels": 2,
+        "audio_channel_layout": "stereo"
+      },
+      "reference_artifact_note": "이 값은 최초 full-source 제작본의 참조값이다. start_demo.py는 공식 HLS의 필요한 구간을 정밀 seek 후 재인코딩하므로 같은 발언·길이를 재현해도 바이트 해시는 달라질 수 있다. 최신 재현 결과는 docs/DEMO_VERIFICATION.md에 기록한다."
+    },
+    "verification": {
+      "verified_at": "2026-11-09",
+      "verified_by": "agent",
+      "current": "MBC 기사 날짜, 원본 15~32초의 한동훈 얼굴·성명 자막·인용 자막과 로컬 Whisper base 한국어 ASR의 발언 순서를 대조했다. ASR 오인식은 인용문에 사용하지 않았다.",
+      "past": {
+        "source_page": "https://imnews.imbc.com/replay/2024/nwdesk/article/6663716_36515.html",
+        "source_hls_url": "https://video.imnews.imbc.com/video/_definst_/imnews/video.imnews.imbc.com/replay/2024/nwdesk/article/__icsFiles/afieldfile/2024/12/05/desk_20241205_204127_1_21.mp4/playlist.m3u8",
+        "source_start": 82,
+        "source_end": 92,
+        "date": "2024-12-05",
+        "sha256": "25b2c24da559315e4d7152600760948fc9ce801f6dab56a3f50d18f5c2d3d889",
+        "method": "기사 원문과 원본 영상 82~92초의 한동훈 성명·발언 자막, 로컬 한국어 ASR의 통과 반대 및 계엄 옹호 부정 순서를 대조했다. 괄호 속 탄핵이는 방송 자막의 편집상 보충이다. 과거 영상은 데모 출력에 삽입하지 않았다."
+      },
+      "context_sources": [
+        "https://imnews.imbc.com/replay/2024/nwdesk/article/6666632_36515.html",
+        "https://news.sbs.co.kr/news/endPage.do?news_id=N1007909423"
+      ],
+      "limit": "사람 최종 검수나 공개 재배포 승인을 뜻하지 않는다. 판정 관계의 정답이나 모델 정확도를 검증한 자료가 아니다."
+    }
+  }
+]

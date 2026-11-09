@@ -1,0 +1,14 @@
+ts	phase	decision	why	evidence	result
+2026-11-09T04:20:00Z	frame	독립 데모 저장소의 현재 변경12파일을 별도 worktree로 보존한다	원격 HEAD에는 실제 데이터와 OpenAI 모델 변경이 아직 없어 HEAD만 쓰면 현재 개선을 잃는다	/private/tmp/factkok-e2e-baseline.patch	보존 완료
+2026-11-09T04:20:01Z	architecture	MagicPath B 디자인을 기존 정적 HTML과 JavaScript 구조에 이식한다	React 빌드·배포 단계를 추가하지 않고 실제 Python 세션과 SSE 계약을 재사용한다	docs/DEMO_INTEGRATION_PLAN.md	구현 전 계약 확정
+2026-11-09T04:30:45.469578+00:00	audit	앞선 두 시간값은 생성 시각을 잘못 추정한 값이다	실제 생성은 04:18:57 UTC 이전이며 append-only 기록을 보존한다	clock tool 2026-11-09 04:18:57 UTC	시간 오류 정정
+2026-11-09T04:37:19.524682+00:00	provider	두 인물의 실제 gbrain/Codex HTTP 호출을 검사한다	mock 테스트만으로 실호출을 주장하지 않는다	logs/integration-http.json	Lee3/Han1 검색·판정·출처·Range206 PASS
+2026-11-09T04:37:19.524732+00:00	control	같은 과거 원문을 다시 입력하는 실제 대조군을 검사한다	카드 미표시를 판정 실패와 구분한다	logs/negative-control-actual.json	consistent confidence1.0 완료와 카드0 확인
+2026-11-09T04:37:19.524735+00:00	review	POST 응답 유실 뒤 SSE 완료를 서버 수락으로 기록한다	seek 재생이 이미 받은 카드를 queued로 덮는 독립 리뷰 결함	web/model.test.mjs	수정 및12개 회귀 PASS
+2026-11-09T04:37:19.524737+00:00	ui	편집 안내는 현재 발언 원문을 덮지 않는다	실제 완주 화면에서 원문과 출처가 사라짐을 관찰했다	web/app.js renderQuote	수정,최신 UI 브라우저 재검증 대기
+2026-11-09T05:02:22.254239+00:00	cold_start	공식 HLS의 필요한 구간을 앞구간 seek 후 정밀 절단한다	전체 다운로드 시간 초과와 ChannelA 직접 seek의1초 누락을 실재현했다	start_demo.py; tests/test_live_contradiction_launcher.py	새복사본4구간·미디어·PGLite시작 PASS
+2026-11-09T05:02:22.254329+00:00	verification	Git metadata 없는 복사본을 clone 조건으로 맞춰 다시 검사한다	Codex Git 검사 실패를 인증 오류나 모델 오류로 숨기지 않는다	cold-start-non-git-http.json; cold-start-http.json	검사우회없이실제4호출·출처일치 PASS
+2026-11-09T05:02:22.254332+00:00	media	90초 화면녹화는 실제페이지 약2fps 무음 캡처로 남긴다	IAB screencast가 우측 패널을 잘라 전체 screenshot 기반으로 바꿨다	full-screen-recording/frames.json; factkok-demo-90s-final.mp4	1440x1000 H264 90.000초,두인물실제결과 포함
+2026-11-09T05:09:03.653506+00:00	verification	현재 인용과 영상 시점도 출처 검사의 필수 조건으로 삼는다	과거 원문만 확인하면 다른 현재 문장도 잘못 PASS할 수 있다는 독립 리뷰 재현	tests/test_live_contradiction_verification.py; cold-start-source-audit.json	27회귀+실제4카드 재대조 PASS,전체170 PASS
+2026-11-09T05:09:03.653639+00:00	integration	검증된 소스를 원래 독립 데모 저장소에 반영한다	임시 worktree만으로 완료를 주장하지 않는다	/private/tmp/factkok-original-backup-20261109/manifest.json	원본 변경 백업·동시변경검사 후48경로 반영,51소스와2영상 byte대조 PASS,원래Gitindex보존
+2026-11-09T05:13:50.005790+00:00	delivery	소스 브랜치와 초안PR로 제출 자료를 인계한다	실제 접수와 운영 배포를 준비 완료와 구분한다	https://github.com/brainer3220/factkok-live-contradiction/pull/2	bd511f8 게시,원래8765 실행·기본경로대조군 PASS,임시서버중지

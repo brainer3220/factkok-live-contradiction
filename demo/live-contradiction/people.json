@@ -1,0 +1,49 @@
+{
+  "default_person_id": "lee-jae-myung",
+  "people": [
+    {
+      "id": "kim-dong-yeon",
+      "name": "김동연",
+      "portrait": "/assets/people/kim-dong-yeon.jpg"
+    },
+    {
+      "id": "moon-jae-in",
+      "name": "문재인",
+      "portrait": "/assets/people/moon-jae-in.jpg"
+    },
+    {
+      "id": "ahn-cheol-soo",
+      "name": "안철수",
+      "portrait": "/assets/people/ahn-cheol-soo.png"
+    },
+    {
+      "id": "oh-se-hoon",
+      "name": "오세훈",
+      "portrait": "/assets/people/oh-se-hoon.jpg"
+    },
+    {
+      "id": "yoon-suk-yeol",
+      "name": "윤석열",
+      "portrait": "/assets/people/yoon-suk-yeol.jpg"
+    },
+    {
+      "id": "lee-jae-myung",
+      "name": "이재명",
+      "portrait": "/assets/people/lee-jae-myung.jpg",
+      "config": "demo.yaml",
+      "transcript": "transcript.json"
+    },
+    {
+      "id": "lee-jun-seok",
+      "name": "이준석",
+      "portrait": "/assets/people/lee-jun-seok.jpg"
+    },
+    {
+      "id": "han-dong-hoon",
+      "name": "한동훈",
+      "portrait": "/assets/people/han-dong-hoon.png",
+      "config": "profiles/han-dong-hoon.yaml",
+      "transcript": "profiles/han-dong-hoon.transcript.json"
+    }
+  ]
+}

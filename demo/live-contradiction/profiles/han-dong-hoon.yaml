@@ -1,0 +1,26 @@
+holder: 한동훈
+video: han-dong-hoon.mp4
+store: gbrain
+judge: codex
+judge_model: gpt-6-luna
+judge_effort: low
+judge_timeout: 60
+threshold: 0.7
+statements:
+  - statement_id: yoon-impeachment-change
+    topic: 윤석열 대통령 탄핵
+    past:
+      text: (탄핵이) 통과되지 않도록 노력하겠습니다. 그런데 대통령의 위헌적인 계엄을 옹호하려는 것이 절대 아닙니다.
+      date: '2024-12-05'
+      venue: 국민의힘 최고위원회의 / MBC 뉴스데스크 현장 보도
+      source_url: https://imnews.imbc.com/replay/2024/nwdesk/article/6663716_36515.html
+      verified_at: '2026-11-09'
+      verified_by: agent
+      verification_method: MBC 기사 원문, 원본 영상 82~92초의 본인 음성 ASR과 방송 자막을 대조했다. 괄호 속 탄핵이는 방송 자막의 보충 표시다. 사람 최종 검수 아님.
+    current:
+      text: 대통령의 조기 퇴진 의사가 없음이 확인된 이상 즉각적인 직무 정지가 필요합니다. 더 이상의 혼란은 막아야 합니다. 이제 그 유효한 방식은 단 하나뿐입니다.
+      date: '2024-12-12'
+      source_url: https://imnews.imbc.com/news/2024/politics/article/6666421_36431.html
+      context: 과거는 준비 없는 혼란에 따른 국민과 지지자 피해를 이유로 당시 탄핵안 통과를 막겠다는 입장이다. 위헌적 계엄을 옹호하지 않는다는 단서도 함께 보존한다. 현재는 대통령의 조기 퇴진 불응과 사안의 심각성에 관한 후속 확인을 이유로 탄핵을 통한 즉각적인 직무 정지를 요구한 12월 12일 기자회견이다. 단 하나의 유효한 방식은 탄핵 절차를 뜻하며, 같은 날 MBC 뉴스데스크와 SBS 현장영상 기사에서 명시적 탄핵 찬성을 확인했다. 시점과 상황이 달라진 공개 입장 변화이며 거짓말이나 동기 판정의 근거가 아니다.
+      segment_index: 0
+      expected_relation: position_change
