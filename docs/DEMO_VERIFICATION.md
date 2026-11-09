@@ -84,3 +84,9 @@ UNVERIFIED: 행사 공식 제출 폼·규정, 사람의 최종 인용 검수와 
 최종 실제 결과는 cold-start-http.json에서 person/run/provider/model과 완료 이벤트,4개의 source_checks=true,issues=[]로 확인한다. 이 검사는 로컬 첫 실행의 연결 검증이며 hosted 서비스나 모델 정확도 평가가 아니다.
 
 최종 출처 검사 보완 후에는 이미 보존된 실제4개 card JSONL을 check_card_source로 재대조했다. 과거 인용·날짜·URL뿐 아니라 현재 문장과0/30/60초 시점까지4/4일치했다. 결과는 ignored cold-start-source-audit.json에 있다. 이 대조를 새 모델 호출로 표시하지 않는다.
+
+## 최종 인계
+
+원래 /Users/brainer/Programming/factkok-live-contradiction에 소스51개와 두 로컬 영상을 반영하고 byte일치를 확인했다. 원래 Git index와 기존 변경은 보존했다. 수정 전 파일 백업은 /private/tmp/factkok-original-backup-20261109에 있다. 원래 저장소에서 기본 로컬 gbrain 경로로 verify_control.py를 실행해 consistent0.99·completed·카드0을 다시 확인했다. localhost:8765에서2명의 자료 검사·시딩·서버 시작과 브라우저 인물 선택·55초 영상 로딩을 확인했다. 임시8773/8774/8775 서버는 중지하고 최종8765를 유지했다.
+
+GitHub 검토 브랜치 codex/end-to-end-demo와 초안 PR #2를 만들었다. 코드 커밋은 bd511f8이다. main병합·배포·행사 제출·영상 공개 업로드는 수행하지 않았다. 제출 설명과 검토 링크는 SUBMISSION.md에서 확인한다.

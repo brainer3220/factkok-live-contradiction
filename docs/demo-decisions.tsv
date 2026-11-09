@@ -11,3 +11,4 @@ ts	phase	decision	why	evidence	result
 2026-11-09T05:02:22.254332+00:00	media	90초 화면녹화는 실제페이지 약2fps 무음 캡처로 남긴다	IAB screencast가 우측 패널을 잘라 전체 screenshot 기반으로 바꿨다	full-screen-recording/frames.json; factkok-demo-90s-final.mp4	1440x1000 H264 90.000초,두인물실제결과 포함
 2026-11-09T05:09:03.653506+00:00	verification	현재 인용과 영상 시점도 출처 검사의 필수 조건으로 삼는다	과거 원문만 확인하면 다른 현재 문장도 잘못 PASS할 수 있다는 독립 리뷰 재현	tests/test_live_contradiction_verification.py; cold-start-source-audit.json	27회귀+실제4카드 재대조 PASS,전체170 PASS
 2026-11-09T05:09:03.653639+00:00	integration	검증된 소스를 원래 독립 데모 저장소에 반영한다	임시 worktree만으로 완료를 주장하지 않는다	/private/tmp/factkok-original-backup-20261109/manifest.json	원본 변경 백업·동시변경검사 후48경로 반영,51소스와2영상 byte대조 PASS,원래Gitindex보존
+2026-11-09T05:13:50.005790+00:00	delivery	소스 브랜치와 초안PR로 제출 자료를 인계한다	실제 접수와 운영 배포를 준비 완료와 구분한다	https://github.com/brainer3220/factkok-live-contradiction/pull/2	bd511f8 게시,원래8765 실행·기본경로대조군 PASS,임시서버중지

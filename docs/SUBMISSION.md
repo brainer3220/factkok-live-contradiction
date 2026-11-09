@@ -19,7 +19,7 @@
 
 제출용 소스: [codex/end-to-end-demo](https://github.com/brainer3220/factkok-live-contradiction/tree/codex/end-to-end-demo)
 
-저장소의 main과 검토 브랜치를 구분합니다. 검토 브랜치의 [실행 안내](https://github.com/brainer3220/factkok-live-contradiction/blob/codex/end-to-end-demo/demo/live-contradiction/README.md)를 사용합니다. 방송 MP4, 인증 정보와 생성된 판정 로그는 저장소에 포함하지 않습니다.
+검토용 [초안 PR #2](https://github.com/brainer3220/factkok-live-contradiction/pull/2)에 변경과 검증을 정리했습니다. 저장소의 main과 검토 브랜치를 구분합니다. 검토 브랜치의 [실행 안내](https://github.com/brainer3220/factkok-live-contradiction/blob/codex/end-to-end-demo/demo/live-contradiction/README.md)를 사용합니다. 방송 MP4, 인증 정보와 생성된 판정 로그는 저장소에 포함하지 않습니다.
 
 ## 90초 화면 녹화
 

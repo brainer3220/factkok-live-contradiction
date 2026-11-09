@@ -45,7 +45,7 @@ uv run python demo/live-contradiction/verify_demo.py
 uv run python demo/live-contradiction/verify_control.py
 ```
 
-두 verify 명령은 **실제 Codex 사용량을 사용한다**. `verify_demo.py`는 실행 중인 서버에 인물별 세그먼트를 보내고 실제 gbrain 검색·Codex 시작과 완료·카드·출처 일치·영상 Range 206을 검사한다. 브라우저 재생 검사는 별도다. [검증 기록](../../docs/DEMO_VERIFICATION.md)과 [제출 초안](../../docs/SUBMISSION.md)에 실행 범위를 남긴다.
+두 verify 명령은 **실제 Codex 사용량을 사용한다**. `verify_demo.py`는 실행 중인 서버에 인물별 세그먼트를 보내고 실제 gbrain 검색·Codex 시작과 완료·카드·출처 일치·영상 Range 206을 검사한다. 이 HTTP 검사는 새 run을 시작하므로 기존 브라우저 비교 세션이 종료될 수 있다. 브라우저 재생 검사는 별도다. [검증 기록](../../docs/DEMO_VERIFICATION.md)과 [제출 초안](../../docs/SUBMISSION.md)에 실행 범위를 남긴다.
 
 ## 구현
 

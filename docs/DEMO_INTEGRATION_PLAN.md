@@ -14,9 +14,9 @@
 - [x] 두 번째 인물의 출처·영상·자막을 준비한다. 원문과 영상이 확인된 자료만 실행 가능한 인물로 노출한다.
 - [x] 실제 gbrain과 Codex 호출을 완료하고 같은 run의 UI·검색·모델·카드를 대조한다.
 - [x] 브라우저에서 선택·재생·판정·출처·재시작·실패 복구·모바일을 확인한다.
-- [ ] 재현 명령, 제출 설명,90초 데모 자료,GitHub 변경 링크를 준비한다.
+- [x] 재현 명령, 제출 설명,90초 데모 자료,GitHub 변경 링크를 준비한다.
 - [x] Phase D: Keep the audit trail.
-- [ ] Phase E: Verify and hand back.
+- [x] Phase E: Verify and hand back.
 
 ## 완료 판정
 
