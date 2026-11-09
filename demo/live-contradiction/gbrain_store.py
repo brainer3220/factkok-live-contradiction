@@ -18,11 +18,21 @@ import pipeline as demo
 SLUG_PREFIX = "live-demo/"
 SEARCH_TIMEOUT_SECONDS = 1.5
 DEFAULT_GBRAIN_HOME = Path.home() / ".factkok-live-demo-gbrain"
+POLICY_NAME_ALIASES = (("민생지원금", "민생회복지원금"),)
 
 
 def gbrain_env() -> dict[str, str]:
     home = os.getenv("LIVE_DEMO_GBRAIN_HOME", str(DEFAULT_GBRAIN_HOME))
     return {**os.environ, "GBRAIN_HOME": home}
+
+
+def expand_policy_names(text: str) -> str:
+    """같은 정책의 통용 명칭을 검색어에 추가하고 원문은 보존한다."""
+    aliases = []
+    for names in POLICY_NAME_ALIASES:
+        if any(name in text for name in names):
+            aliases.extend(name for name in names if name not in text)
+    return " ".join((text, *aliases))
 
 
 def page_markdown(take: demo.Take) -> str:
@@ -36,7 +46,8 @@ def page_markdown(take: demo.Take) -> str:
         "source_url": take.source_url,
     }
     lines = ["---", *(f"{key}: {json.dumps(value, ensure_ascii=False)}" for key, value in frontmatter.items()), "---"]
-    return "\n".join(lines) + "\n" + take.text + "\n"
+    body = f"# {take.topic}\n\n{take.text}" if take.topic else take.text
+    return "\n".join(lines) + "\n" + body + "\n"
 
 
 def parse_search(raw: str, holder: str, by_statement: dict[str, demo.Take]) -> list[demo.Take]:
@@ -57,10 +68,11 @@ def parse_search(raw: str, holder: str, by_statement: dict[str, demo.Take]) -> l
                 take_id=statement_id,
                 statement_id=statement_id,
                 holder=holder,
-                text=str(row.get("chunk_text") or known.text),
+                text=known.text,
                 date=known.date,
                 source_url=known.source_url,
                 venue=known.venue,
+                topic=known.topic,
             )
         )
     return takes
@@ -79,7 +91,7 @@ class GbrainStore:
         command = [
             self._binary,
             "search",
-            text,
+            expand_policy_names(text),
             "--where",
             json.dumps({"holder": holder}, ensure_ascii=False),
             "--limit",

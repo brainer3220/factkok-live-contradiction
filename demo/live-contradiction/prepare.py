@@ -4,9 +4,12 @@
     uv run python demo/live-contradiction/prepare.py seed
     uv run python demo/live-contradiction/prepare.py score <run_id>
 
-check는 demo.yaml·transcript.json의 짝, 출처 URL 응답, 사람 대조 기록(verified_at),
+check는 demo.yaml·transcript.json의 짝, 출처 URL 응답, 출처 대조 기록(verified_at),
 영상 faststart 여부를 확인한다. score는 run 로그의 카드가 준비한 쌍의
-statement_id를 가리키는지 센다(R9: 준비 쌍과 맞지 않는 카드는 유형과 관계없이 오탐).
+statement_id를 가리키는지 센다. current.expected_relation이 consistent 또는 unrelated인
+대조군은 해당 관계와 statement_id가 일치하는 완료 판정 로그가 있어야 통과한다.
+verified_at은 출처 대조 시점이며, agent가 대조했으면 verified_by에 agent를 명시한다.
+이 기록만으로 사람의 검수나 공개 승인을 증명하지 않는다.
 """
 
 from __future__ import annotations
@@ -52,22 +55,35 @@ def mp4_is_faststart(path: Path) -> bool:
 
 
 def url_responds(url: str) -> bool:
-    request = urllib.request.Request(url, method="GET", headers={"User-Agent": "Mozilla/5.0 factkok-demo-check"})
+    if not url.startswith(("https://", "http://")):
+        return False
     try:
+        request = urllib.request.Request(url, method="GET", headers={"User-Agent": "Mozilla/5.0 factkok-demo-check"})
         with urllib.request.urlopen(request, timeout=URL_TIMEOUT_SECONDS) as response:
             return 200 <= response.status < 400
-    except (urllib.error.URLError, TimeoutError, OSError):
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
         return False
 
 
-def check(config_path: Path) -> list[str]:
+def transcript_for_config(config_path: Path, explicit_path: Path | None = None) -> Path:
+    """명시한 자막, 설정과 이름이 같은 자막, 인접 기본 자막 순서로 고른다."""
+    if explicit_path is not None:
+        return explicit_path
+    named = config_path.with_suffix(".transcript.json")
+    return named if named.is_file() else config_path.parent / "transcript.json"
+
+
+def check(config_path: Path, transcript_path: Path | None = None) -> list[str]:
     """문제 목록을 돌려준다. 빈 목록이면 통과."""
     problems: list[str] = []
     config = demo.load_config(config_path)
-    segments = demo.load_transcript(BASE_DIR / "transcript.json")
+    segments = demo.load_transcript(transcript_for_config(config_path, transcript_path))
     for statement in config.statements:
         sid = statement["statement_id"]
         current = statement.get("current") or {}
+        expected_relation = current.get("expected_relation")
+        if expected_relation is not None and expected_relation not in demo.RELATIONS:
+            problems.append(f"{sid}: current.expected_relation이 유효한 판정 관계가 아닙니다.")
         index = current.get("segment_index")
         if not isinstance(index, int) or not 0 <= index < len(segments):
             problems.append(f"{sid}: current.segment_index가 transcript 범위 밖입니다.")
@@ -82,6 +98,9 @@ def check(config_path: Path) -> list[str]:
             problems.append(f"{sid}: verified_at이 없습니다. 인용문·날짜를 원문과 대조한 뒤 기록하세요.")
         if not url_responds(str(past["source_url"])):
             problems.append(f"{sid}: source_url이 응답하지 않습니다: {past['source_url']}")
+        current_url = current.get("source_url")
+        if current_url and not url_responds(str(current_url)):
+            problems.append(f"{sid}: current.source_url이 응답하지 않습니다.")
     video = config.base_dir / config.video
     if not video.is_file():
         problems.append(f"영상이 없습니다: {video}")
@@ -92,25 +111,48 @@ def check(config_path: Path) -> list[str]:
 
 def score(config_path: Path, run_id: str) -> dict[str, object]:
     config = demo.load_config(config_path)
-    expected = {
-        statement["current"]["segment_index"]: statement["statement_id"] for statement in config.statements
-    }
+    expected_cards = {}
+    expected_controls = {}
+    for statement in config.statements:
+        current = statement["current"]
+        relation = current.get("expected_relation")
+        if relation is not None and relation not in demo.RELATIONS:
+            raise demo.ConfigError("current.expected_relation이 유효한 판정 관계가 아닙니다.")
+        expected = (statement["statement_id"], relation)
+        if relation in ("consistent", "unrelated"):
+            expected_controls[current["segment_index"]] = expected
+        else:
+            expected_cards[current["segment_index"]] = expected
     log_path = BASE_DIR / "logs" / f"{run_id}.jsonl"
-    hits, false_positives = set(), []
+    hits, control_hits, false_positives = set(), set(), []
     for line in log_path.read_text(encoding="utf-8").splitlines():
         event = json.loads(line).get("event") or {}
+        index, statement_id = event.get("segment_index"), event.get("statement_id")
+        relation = event.get("relation")
+        if event.get("kind") == "log":
+            if expected_controls.get(index) == (statement_id, relation):
+                control_hits.add(statement_id)
+            continue
         if event.get("kind") != "card":
             continue
-        index, statement_id = event.get("segment_index"), event.get("statement_id")
-        if expected.get(index) == statement_id:
+        expected_id, expected_relation = expected_cards.get(index, (None, None))
+        if index in expected_cards and statement_id == expected_id and (
+            expected_relation is None or relation == expected_relation
+        ):
             hits.add(statement_id)
         else:
             false_positives.append({"segment_index": index, "statement_id": statement_id})
+    missed = sorted({value[0] for value in expected_cards.values()} - hits)
+    missed_controls = sorted({value[0] for value in expected_controls.values()} - control_hits)
     return {
-        "prepared": len(expected),
+        "prepared": len(expected_cards),
         "correct_cards": len(hits),
-        "missed": sorted(set(expected.values()) - hits),
+        "missed": missed,
         "false_positives": false_positives,
+        "controls": len(expected_controls),
+        "correct_controls": len(control_hits),
+        "missed_controls": missed_controls,
+        "passed": not missed and not missed_controls and not false_positives,
     }
 
 
@@ -119,9 +161,10 @@ def main() -> int:
     parser.add_argument("command", choices=("check", "seed", "score"))
     parser.add_argument("run_id", nargs="?")
     parser.add_argument("--config", type=Path, default=BASE_DIR / "demo.yaml")
+    parser.add_argument("--transcript", type=Path)
     args = parser.parse_args()
     if args.command == "check":
-        problems = check(args.config)
+        problems = check(args.config, args.transcript)
         for problem in problems:
             print(f"- {problem}")
         print("통과" if not problems else f"문제 {len(problems)}건")
@@ -136,8 +179,9 @@ def main() -> int:
         return 0
     if not args.run_id:
         parser.error("score에는 run_id가 필요합니다.")
-    print(json.dumps(score(args.config, args.run_id), ensure_ascii=False, indent=2))
-    return 0
+    result = score(args.config, args.run_id)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if result["passed"] else 1
 
 
 if __name__ == "__main__":

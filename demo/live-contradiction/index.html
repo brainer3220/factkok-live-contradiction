@@ -1,174 +1,107 @@
 <!doctype html>
 <html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>팩트콕 · 말 바꾸기 즉시 소환</title>
-<style>
-  /* 팩트콕 frontend/app/globals.css 토큰을 그대로 사용한다. */
-  :root {
-    --background: oklch(98.2% 0.006 160);
-    --surface: oklch(99.4% 0.004 160);
-    --surface-strong: oklch(95.9% 0.011 160);
-    --text: oklch(18% 0.016 160);
-    --muted: oklch(45% 0.02 160);
-    --border: oklch(88% 0.009 160);
-    --primary-950: oklch(23% 0.07 160);
-    --primary-700: oklch(39% 0.1 160);
-    --primary-50: oklch(97.6% 0.016 160);
-    --danger: oklch(43% 0.13 42);
-    --danger-soft: oklch(97.5% 0.034 42);
-    --warning: oklch(48% 0.13 76);
-    --warning-soft: oklch(97.2% 0.042 76);
-    --shadow-soft: 0 14px 30px -24px oklch(18% 0.016 160 / 0.24);
-    --ring: 0 0 0 3px oklch(39% 0.1 160 / 0.16);
-    font-family: "Pretendard Variable", "Pretendard", "SF Pro Display", system-ui, -apple-system, sans-serif;
-    color: var(--text);
-    background: var(--background);
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; }
-  header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
-  header strong { font-size: 18px; letter-spacing: -0.01em; }
-  header .sub { color: var(--muted); font-size: 14px; }
-  header .chips { margin-left: auto; display: flex; gap: 8px; }
-  .chip { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--surface-strong); color: var(--muted); }
-  .chip.warn { background: var(--warning-soft); color: var(--warning); }
-  #banner { display: none; padding: 10px 24px; background: var(--danger-soft); color: var(--danger); font-weight: 600; font-size: 14px; }
-  #banner.show { display: block; }
-  main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; padding: 20px 24px; height: calc(100vh - 58px); }
-  .stage { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-  video { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; }
-  .now { padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); min-height: 56px; }
-  .now .who { font-size: 12px; color: var(--muted); }
-  .now .line { font-size: 17px; margin-top: 2px; }
-  .now .checking { font-size: 12px; color: var(--primary-700); margin-top: 6px; display: none; }
-  .now .checking.show { display: block; }
-  details { font-size: 12px; color: var(--muted); }
-  #log { max-height: 140px; overflow: auto; margin: 6px 0 0; padding: 0; list-style: none; font-family: "JetBrains Mono", ui-monospace, monospace; }
-  aside { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--border); padding-left: 20px; }
-  aside h2 { font-size: 14px; margin: 0 0 10px; color: var(--muted); font-weight: 600; }
-  #cards { display: flex; flex-direction: column; gap: 12px; overflow: auto; padding-bottom: 12px; }
-  .empty { color: var(--muted); font-size: 14px; line-height: 1.5; }
-  .card { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-soft); padding: 14px 16px; animation: enter 220ms ease-out; }
-  @keyframes enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .card { animation: none; } }
-  .card .title { font-weight: 700; color: var(--danger); font-size: 15px; }
-  .card .title.change { color: var(--warning); }
-  .quote { margin: 10px 0 0; padding-left: 10px; border-left: 3px solid var(--border); font-size: 14px; line-height: 1.5; }
-  .quote.past { border-left-color: var(--primary-700); }
-  .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .meta a { color: var(--primary-700); font-weight: 600; }
-  .meta a:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 4px; }
-  .why { font-size: 13px; margin-top: 10px; color: var(--text); }
-  .note { font-size: 11px; color: var(--muted); margin-top: 8px; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } aside { border-left: 0; padding-left: 0; } }
-</style>
-</head>
-<body>
-<header>
-  <strong>팩트콕</strong><span class="sub">말 바꾸기 즉시 소환 · 데모</span>
-  <div class="chips"><span class="chip" id="store-chip">기억 저장소 확인 중</span><span class="chip" id="run-chip">재생 대기</span></div>
-</header>
-<div id="banner" role="alert"></div>
-<main>
-  <section class="stage">
-    <video id="video" src="/video" controls playsinline preload="auto"></video>
-    <div class="now" aria-live="polite">
-      <div class="who" id="now-who">지금 발언</div>
-      <div class="line" id="now-line">영상을 재생하면 자막이 여기에 나옵니다.</div>
-      <div class="checking" id="checking">과거 발언과 비교하는 중…</div>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="인물을 고르고 영상을 보며 과거 발언의 원문과 자동 예비 판정을 확인하세요.">
+    <title>인물 · 팩트콕</title>
+    <link rel="stylesheet" href="/web/styles.css">
+    <script type="module" src="/web/app.js"></script>
+  </head>
+  <body class="people-app">
+    <div id="people-view" class="concept-b">
+      <a class="b-skip-link" href="#people-main">인물 목록으로 건너뛰기</a>
+      <header class="b-header">
+        <div class="b-header-content">
+          <a class="b-brand" href="#people-main">팩트콕</a>
+          <span class="b-header-location">인물</span>
+        </div>
+      </header>
+      <main id="people-main" class="b-main" tabindex="-1">
+        <div class="b-toolbar">
+          <div class="b-heading"><h1>인물</h1></div>
+          <div class="b-search-control" role="search">
+            <label for="people-search">인물 검색</label>
+            <div class="b-search-field">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+              <input id="people-search" type="search" placeholder="예: 이재명" autocomplete="off" spellcheck="false">
+              <button id="clear-search" class="b-clear-search" type="button" aria-label="검색어 지우기" hidden>×</button>
+            </div>
+          </div>
+        </div>
+        <div class="b-list-heading"><h2 id="people-list-heading">전체 인물</h2><span>가나다순</span></div>
+        <p id="people-status" class="b-sr-only" role="status" aria-live="polite">인물 목록을 불러오는 중입니다.</p>
+        <ul id="people-grid" class="b-people-grid" aria-label="인물 목록"></ul>
+        <div id="people-message" class="b-empty-state" role="status"><h2>인물 목록 불러오는 중</h2></div>
+      </main>
     </div>
-    <details><summary>판정 로그</summary><ul id="log"></ul></details>
-  </section>
-  <aside>
-    <h2>과거 발언 기록</h2>
-    <div id="cards" aria-live="polite">
-      <p class="empty" id="empty">이 인물이 예전에 다르게 말한 기록이 확인되면 원문 링크와 함께 여기에 나타납니다.</p>
+
+    <div id="detail-view" class="people-detail" hidden>
+      <a class="b-skip-link" href="#detail-main">영상과 발언으로 건너뛰기</a>
+      <header class="people-detail-header">
+        <button id="back-to-people" class="people-back" type="button"><span aria-hidden="true">←</span> 인물</button>
+        <span class="people-header-divider" aria-hidden="true"></span>
+        <span id="detail-portrait" class="people-portrait" aria-hidden="true"></span>
+        <h1 id="detail-title" tabindex="-1"></h1>
+      </header>
+      <main id="detail-main" class="workspace" tabindex="-1">
+        <div id="detail-message" class="people-not-connected" role="status"></div>
+        <div id="work-content" class="work-content" hidden>
+          <div class="main-grid">
+            <section class="watch" aria-label="현재 발언">
+              <div class="video-frame">
+                <video id="video" controls playsinline preload="metadata">이 브라우저에서는 영상을 재생할 수 없습니다. 아래 원문과 발언 자막을 확인해 주세요.</video>
+              </div>
+              <div class="video-tools">
+                <p class="video-caption">시연용 편집 영상 · 음성 포함</p>
+                <button id="restart-run" class="text-button" type="button">처음부터 다시 보기</button>
+              </div>
+              <div id="media-error" class="inline-error" role="alert" hidden></div>
+              <div class="current-quote">
+                <p id="now-who" class="quote-label">현재 발언</p>
+                <blockquote id="now-line"></blockquote>
+                <div class="quote-meta"><span id="now-meta"></span><a id="current-source" target="_blank" rel="noopener noreferrer" hidden>원문 <span aria-hidden="true">↗</span></a></div>
+              </div>
+              <details class="transcript-details">
+                <summary>전체 자막</summary>
+                <ol id="transcript-list" class="transcript-list"></ol>
+              </details>
+            </section>
+            <section class="comparison" aria-label="발언 기록과 비교">
+              <div class="record-sidebar"><nav id="topic-nav" class="topic-nav" aria-label="비교할 주제"></nav></div>
+              <div id="run-notice" class="run-notice" role="status" aria-live="polite"></div>
+              <div id="processing-status" class="processing-status" role="status" aria-live="polite"></div>
+              <div id="comparison-result" class="comparison-result" aria-live="polite"></div>
+              <details class="method">
+                <summary>출처와 한계 <span aria-hidden="true">⌄</span></summary>
+                <p id="statement-context"></p>
+                <p>영상 속 발언이 끝나면 과거 기록을 검색하고 OpenAI 모델이 비교합니다. 자동 예비 판정이며 사람의 최종 검수 전입니다.</p>
+                <p>입장 변화는 거짓말 판정이 아닙니다. 날짜와 맥락을 원문에서 직접 확인하세요.</p>
+                <p id="store-info"></p>
+              </details>
+              <details class="diagnostics"><summary>처리 기록</summary><ul id="event-log"></ul></details>
+            </section>
+          </div>
+        </div>
+      </main>
     </div>
-  </aside>
-</main>
-<script>
-(() => {
-  const video = document.getElementById('video');
-  const cards = document.getElementById('cards');
-  const banner = document.getElementById('banner');
-  const log = document.getElementById('log');
-  const checking = document.getElementById('checking');
-  let runId = null, events = null, segments = [], holder = '', pending = new Set();
-  const sent = new Set();
 
-  const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-  const addLog = (text) => { const li = el('li', null, `${new Date().toLocaleTimeString('ko-KR')} ${text}`); log.prepend(li); };
-
-  function showBanner(message) { banner.textContent = message; banner.classList.add('show'); }
-  function hideBanner() { banner.classList.remove('show'); banner.textContent = ''; }
-
-  function renderCard(e) {
-    document.getElementById('empty')?.remove();
-    const card = el('article', 'card');
-    card.append(el('div', e.relation === 'position_change' ? 'title change' : 'title', e.title));
-    card.append(el('p', 'quote', `“${e.now_text}”`));
-    card.append(el('div', 'meta', `지금 발언 · 영상 ${fmt(e.now_seconds)}`));
-    card.append(el('p', 'quote past', `“${e.past_text}”`));
-    const meta = el('div', 'meta', `${e.past_date} · ${e.past_venue} · `);
-    const link = el('a', null, '원문 보기');
-    link.href = e.past_url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-    meta.append(link);
-    card.append(meta);
-    if (e.rationale) card.append(el('div', 'why', e.rationale));
-    card.append(el('div', 'note', `자동 예비 판정(확신도 ${Math.round(e.confidence * 100)}%) · 원문을 직접 확인하세요`));
-    cards.prepend(card);
-  }
-
-  function onEvent(e) {
-    if (e.run_id !== runId) return;
-    if (e.segment_index != null) { pending.delete(e.segment_index); checking.classList.toggle('show', pending.size > 0); }
-    if (e.kind === 'card') { renderCard(e); addLog(`#${e.segment_index} 카드 ${e.relation} ${e.confidence}`); }
-    else if (e.kind === 'banner') showBanner(e.message);
-    else if (e.kind === 'banner_clear') hideBanner();
-    else if (e.kind === 'log') addLog(`#${e.segment_index ?? '-'} ${e.message}${e.confidence != null ? ' ' + e.relation + ' ' + e.confidence : ''}`);
-  }
-
-  async function startRun() {
-    const res = await fetch('/session', { method: 'POST', body: '{}' });
-    runId = (await res.json()).run_id;
-    document.getElementById('run-chip').textContent = `run ${runId.slice(0, 6)}`;
-    if (events) events.close();
-    events = new EventSource(`/events?run_id=${runId}`);
-    events.onmessage = (m) => onEvent(JSON.parse(m.data));
-    events.addEventListener('stale', () => events.close());
-  }
-
-  async function sendSegment(seg) {
-    sent.add(seg.index);
-    if (seg.speaker === holder) { pending.add(seg.index); checking.classList.add('show'); }
-    try {
-      const res = await fetch('/segments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run_id: runId, index: seg.index }) });
-      if (!res.ok) addLog(`#${seg.index} 전송 실패 HTTP ${res.status}`);
-    } catch (err) { addLog(`#${seg.index} 서버 연결 실패`); pending.delete(seg.index); }
-  }
-
-  video.addEventListener('timeupdate', () => {
-    const t = video.currentTime;
-    const current = segments.find((s) => s.start <= t && t < s.end);
-    if (current) { document.getElementById('now-who').textContent = current.speaker; document.getElementById('now-line').textContent = current.text; }
-    for (const seg of segments) {
-      // 끝난 지 2초 안의 세그먼트만 보낸다. 앞으로 건너뛴 구간은 버린다.
-      if (!sent.has(seg.index) && seg.end <= t && seg.end >= t - 2) sendSegment(seg);
-    }
-  });
-
-  (async () => {
-    const [config, transcript] = await Promise.all([fetch('/config').then((r) => r.json()), fetch('/transcript.json').then((r) => r.json())]);
-    holder = config.holder; segments = transcript;
-    const chip = document.getElementById('store-chip');
-    chip.textContent = `기억 저장소: ${config.store_label}`;
-    if (config.store_label !== 'gbrain') chip.classList.add('warn');
-    await startRun();
-  })().catch(() => showBanner('데모 서버에 연결하지 못했습니다'));
-})();
-</script>
-</body>
+    <div class="b-footer">
+      <footer class="people-footer">
+        <span>팩트콕</span>
+        <details>
+          <summary>자료와 사진 출처 <span aria-hidden="true">⌄</span></summary>
+          <div class="people-provenance">
+            <p>연결된 인물의 발언 자료로 실제 검색과 자동 예비 판정을 실행하는 로컬 데모입니다. 자료 연결 전인 인물도 목록에 표시합니다.</p>
+            <p>인물 사진은 Wikimedia Commons의 자료입니다. 화면에서 흑백과 크롭을 적용했으며, 원본 파일은 보존했습니다.</p>
+            <ul id="photo-credits"></ul>
+            <p id="photo-credit-status" role="status">사진 출처를 불러오는 중입니다.</p>
+            <p>서체 Noto Sans KR · <a href="/assets/fonts/OFL.txt" target="_blank" rel="noopener noreferrer">SIL Open Font License 1.1</a></p>
+          </div>
+        </details>
+      </footer>
+    </div>
+    <noscript><p class="noscript-note">인물 검색과 영상 비교를 사용하려면 JavaScript를 켜 주세요.</p></noscript>
+  </body>
 </html>

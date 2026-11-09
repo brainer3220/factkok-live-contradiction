@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses
+import io
 import json
 import sys
 from pathlib import Path
@@ -212,6 +214,116 @@ def test_gbrain_results_keep_only_known_statements_with_yaml_sources():
     )
     takes = gbrain_store.parse_search(raw, HOLDER, known)
     assert [take.statement_id for take in takes] == ["s1"]
-    assert takes[0].text == "gbrain 원문"
+    assert takes[0].text == known["s1"].text
     assert takes[0].source_url == known["s1"].source_url
     assert gbrain_store.parse_search(raw, "다른 사람", known) == []
+
+
+def test_pipeline_supplies_matching_context_without_gold_relation_or_changing_quote():
+    quote = "추경을 위한 조건이라면 요구를 양보하겠습니다."
+    context = "2025년 예산 협상에서 조건부 양보를 밝힌 발언이다."
+    statement = {
+        "statement_id": "s1",
+        "current": {"segment_index": 1, "context": context, "expected_relation": "position_change"},
+    }
+    cfg = dataclasses.replace(config(), statements=(statement,))
+
+    class CapturingJudge:
+        prompt = ""
+
+        def judge(self, prompt):
+            self.prompt = prompt
+            return verdict(relation="position_change")
+
+    judge = CapturingJudge()
+    pipe = demo.Pipeline(cfg, FixedStore([make_take("s1")]), judge, run_id="context")
+    cards = [event for event in pipe.process(segment(text=quote)) if event.kind == "card"]
+    assert cards[0].payload["now_text"] == quote
+    assert f"지금 발언: {quote}" in judge.prompt
+    assert f"자료 맥락: {context}" in judge.prompt
+    assert "expected_relation" not in judge.prompt
+    pipe.process(segment(text=quote, index=2))
+    assert context not in judge.prompt
+
+
+def test_progress_callback_streams_before_provider_returns_and_preserves_result_contract():
+    observed = []
+
+    class InspectingJudge:
+        def judge(self, prompt):
+            assert [event.payload["phase"] for event in observed if event.kind == "progress"] == ["searching", "judging"]
+            assert observed[-1].payload["stage"] == "judge.start"
+            assert not any(event.kind == "card" for event in observed)
+            return verdict()
+
+    cfg = dataclasses.replace(config(), judge="codex", judge_model="test-model")
+    pipe = demo.Pipeline(cfg, FixedStore([make_take("s1")]), InspectingJudge(), "progress")
+    result = pipe.process(segment(), on_event=observed.append)
+    assert kinds(result) == ["log", "card"]
+    assert [event.payload["phase"] for event in observed if event.kind == "progress"] == ["searching", "judging", "completed"]
+    progress = [event for event in observed if event.kind == "progress"]
+    assert all(event.payload["provider"] == "codex" and event.payload["model"] == "test-model" for event in progress)
+    assert [event.payload["stage"] for event in observed if "stage" in event.payload] == [
+        "search.start", "search.end", "judge.start", "judge.end",
+    ]
+    assert [event for event in observed if event.kind == "card"] == [result[-1]]
+
+
+@pytest.mark.parametrize("search_fails", [True, False])
+def test_progress_callback_reports_terminal_failure_without_a_card(search_fails):
+    observed = []
+    store = FixedStore([make_take("s1")], error="unavailable" if search_fails else None)
+    judge = FixedJudge(error=demo.JudgeError("unavailable"))
+    pipe = demo.Pipeline(config(), store, judge, "failure")
+    result = pipe.process(segment(), on_event=observed.append)
+    assert observed[-1].kind == "progress" and observed[-1].payload["phase"] == "failed"
+    assert not any(event.kind == "card" for event in result)
+    if not search_fails:
+        ended = [event for event in observed if event.payload.get("stage") == "judge.end"]
+        assert len(ended) == 1 and ended[0].payload["status"] == "failed"
+
+
+def test_cancelled_run_does_not_start_judging_after_search():
+    active = True
+
+    class SupersededStore:
+        label = "test"
+
+        def search(self, holder, text, k):
+            nonlocal active
+            active = False
+            return [make_take("s1")]
+
+    judge = FixedJudge(verdict())
+    observed = []
+    pipe = demo.Pipeline(config(), SupersededStore(), judge, "cancelled")
+    result = pipe.process(segment(), on_event=observed.append, should_continue=lambda: active)
+    assert judge.calls == 0
+    assert not any(event.kind == "card" for event in result)
+    assert observed[-1].payload["phase"] == "skipped"
+    assert not any(event.payload.get("stage") == "judge.start" for event in observed)
+
+
+def test_configured_openai_model_matches_outbound_request_and_progress(monkeypatch):
+    import server
+
+    cfg = dataclasses.replace(config(), judge="openai", judge_model="profile-model")
+    monkeypatch.setenv("OPENAI_API_KEY", "synthetic-provider-fixture")
+    monkeypatch.setenv("LIVE_DEMO_OPENAI_MODEL", "different-environment-model")
+    requests = []
+
+    def respond(request, *, timeout):
+        requests.append(json.loads(request.data))
+        return io.BytesIO(json.dumps({"choices": [{"message": {"content": verdict()}}]}).encode("utf-8"))
+
+    monkeypatch.setattr(demo.urllib.request, "urlopen", respond)
+    judge, ready = server.build_judge(cfg)
+    observed = []
+    result = demo.Pipeline(cfg, FixedStore([make_take("s1")]), judge, "openai-model").process(
+        segment(), on_event=observed.append,
+    )
+    assert ready is True
+    assert result[-1].kind == "card"
+    assert requests[0]["model"] == cfg.judge_model
+    progress = [event for event in observed if event.kind == "progress"]
+    assert all(event.payload["provider"] == "openai" and event.payload["model"] == requests[0]["model"] for event in progress)

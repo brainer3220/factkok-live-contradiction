@@ -1,0 +1,33 @@
+[
+  {
+    "statement_id": "tax-repeal",
+    "source_page": "https://imnews.imbc.com/news/2024/politics/article/6652623_36431.html",
+    "broadcaster": "MBC",
+    "date": "2024-11-04",
+    "input": "20241104-mbc.mp4",
+    "source_start": 364,
+    "source_end": 374,
+    "slot_seconds": 30
+  },
+  {
+    "statement_id": "stimulus-concession",
+    "source_page": "https://imnews.imbc.com/replay/2025/nwdesk/article/6682162_36799.html",
+    "broadcaster": "MBC",
+    "date": "2025-01-31",
+    "input": "support.mp4",
+    "source_start": 53.16,
+    "source_end": 64.96,
+    "slot_seconds": 30
+  },
+  {
+    "statement_id": "basic-income-pledge",
+    "source_page": "https://ichannela.com/news/detail/amp/000000475118.do",
+    "broadcaster": "Channel A",
+    "date": "2025-05-28",
+    "input": "basic.mp4",
+    "source_start": 53,
+    "source_end": 66,
+    "slot_seconds": 30,
+    "audio_channel": "right"
+  }
+]

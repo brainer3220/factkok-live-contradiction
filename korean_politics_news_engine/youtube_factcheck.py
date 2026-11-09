@@ -17,10 +17,11 @@ def summarize_process_error(value: str) -> str:
     return " ".join(cleaned[-4:])[:800] if cleaned else "no process output"
 
 
-def prepare_codex_home(parent_dir: Path) -> Path:
+def prepare_codex_home(parent_dir: Path, *, source_home: Path | None = None) -> Path:
     codex_home = parent_dir / "codex-home"
     codex_home.mkdir(parents=True, exist_ok=True)
-    source_home = Path(os.getenv("CODEX_HOME", str(Path.home() / ".codex"))).expanduser()
+    if source_home is None:
+        source_home = Path(os.getenv("CODEX_HOME", str(Path.home() / ".codex"))).expanduser()
     for filename in ("auth.json", "config.toml", "installation_id"):
         source = source_home / filename
         if source.exists():
@@ -38,13 +39,14 @@ def run_codex_json_prompt(
     codex_model: str = "",
     timeout: int = 180,
     search: bool = False,
+    codex_home: Path | None = None,
 ) -> str:
     with tempfile.TemporaryDirectory(prefix=prefix) as temp_dir:
         temp_path = Path(temp_dir)
         schema_path = temp_path / "schema.json"
         output_path = temp_path / output_filename
         schema_path.write_text(json.dumps(schema, ensure_ascii=False), encoding="utf-8")
-        codex_home = prepare_codex_home(temp_path)
+        command_home = prepare_codex_home(temp_path, source_home=codex_home)
         cmd = [codex]
         if search:
             cmd.append("--search")
@@ -66,7 +68,7 @@ def run_codex_json_prompt(
         if model:
             cmd.extend(["--model", model])
         cmd.append("-")
-        env = {**os.environ, "CODEX_HOME": str(codex_home)}
+        env = {**os.environ, "CODEX_HOME": str(command_home)}
         completed = subprocess.run(cmd, input=prompt, check=False, capture_output=True, text=True, timeout=timeout, env=env)
         if completed.returncode != 0:
             detail = summarize_process_error(completed.stderr or completed.stdout)

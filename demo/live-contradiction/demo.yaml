@@ -1,44 +1,64 @@
-# 데모 설정. holder는 이 파일 한 곳에만 둔다.
-# 아래는 가상 인물 샘플이다. 실제 발표 전에 CANDIDATES.md를 대조해 교체하고 verified_at을 기록한다.
-holder: 가상 의원 김예시
+holder: 이재명
 video: demo.mp4
-store: gbrain        # gbrain | memory(로컬 대체, 화면에 표시됨). 실행 중에는 바뀌지 않는다
-judge: codex         # codex(기본, Codex 로그인 사용량) | openai(OPENAI_API_KEY 필요)
-judge_model: anthropic/claude-sonnet-5-5   # 측정 10~30초/판정, 편차 큼 (2026-11-09)
+store: gbrain
+judge: codex
+judge_model: gpt-6-luna
 judge_effort: low
 judge_timeout: 60
 threshold: 0.7
 statements:
-  - statement_id: s1
-    topic: 국토보유세
-    past:
-      text: 국토보유세를 반드시 도입하겠습니다. 세수 전액을 기본소득으로 돌려드리겠습니다.
-      date: "2025-03-12"
-      venue: 가상 국회 기자회견
-      source_url: https://example.com/sample/s1
-      verified_at: null
-    current:
-      text: 국민 여러분이 반대하시면 국토보유세는 하지 않겠습니다.
-      segment_index: 1
-  - statement_id: s2
-    topic: 금융투자소득세
-    past:
-      text: 금융투자소득세 폐지는 부자 감세입니다. 예정대로 시행해야 합니다.
-      date: "2025-06-03"
-      venue: 가상 TV토론
-      source_url: https://example.com/sample/s2
-      verified_at: null
-    current:
-      text: 아쉽지만 금융투자소득세 폐지에 동의하기로 했습니다.
-      segment_index: 3
-  - statement_id: s3
-    topic: 지역화폐
-    past:
-      text: 지역화폐 예산은 전액 삭감해야 합니다. 효과가 검증되지 않았습니다.
-      date: "2025-09-20"
-      venue: 가상 예산결산특별위원회
-      source_url: https://example.com/sample/s3
-      verified_at: null
-    current:
-      text: 지역화폐 예산을 두 배로 늘려 골목상권을 살리겠습니다.
-      segment_index: 5
+- statement_id: tax-repeal
+  topic: 금융투자소득세
+  past:
+    text: 금융투자소득세(금투세)의 일시적 유예 혹은 완화가 필요하다
+    date: '2024-08-13'
+    venue: MBC 민주당 대표 후보 TV토론 / 경향신문 직접취재
+    source_url: https://www.khan.co.kr/article/202408140600101
+    verified_at: '2026-11-09'
+    verified_by: agent
+    verification_method: 기사 원문 인용문 및 날짜 대조. 사람 최종 검수 아님.
+  current:
+    text: 아쉽지만 정부·여당이 밀어붙이는 금융투자소득세 폐지에 동의하기로 했습니다.
+    segment_index: 0
+    date: '2024-11-04'
+    source_url: https://imnews.imbc.com/news/2024/politics/article/6652623_36431.html
+    expected_relation: position_change
+    context: 과거는 2024년 8월의 일시 유예·완화 주장이다. 현재는 2024년 11월 증시 어려움과 투자자 사정을 이유로 폐지를 수용한
+      발표다. 유예·완화와 폐지의 정책 범위를 구분한다.
+- statement_id: stimulus-concession
+  topic: 민생회복지원금
+  past:
+    text: 민주당은 선거 때 약속드린 민생회복지원금을 포함해 민생회복 긴급조치를 제안드린다
+    date: '2024-04-17'
+    venue: 민주당 최고위원회의 / 세계일보 직접취재
+    source_url: https://www.segye.com/newsView/20240417519005
+    verified_at: '2026-11-09'
+    verified_by: agent
+    verification_method: 기사 원문 인용문 및 날짜 대조. 사람 최종 검수 아님.
+  current:
+    text: 민생지원금 때문에 추경 못 하겠다 이런 태도라면 우리 민생지원금 포기하겠습니다. 뭐 효과만 있다면 민생지원금 아닌 다른 정책인들
+      무슨 상관이 있겠습니까?
+    segment_index: 2
+    date: '2025-01-31'
+    source_url: https://imnews.imbc.com/replay/2025/nwdesk/article/6682162_36799.html
+    expected_relation: position_change
+    context: 추경을 위한 조건부 협상 양보다. 지원금 지급의 필요성 자체를 부정하거나 정책을 영구 폐기했다는 발언이 아니다. 과거 제안은
+      전국민 1인당 25만원 지원금이다.
+- statement_id: basic-income-pledge
+  topic: 기본소득 대선 공약
+  past:
+    text: 모든 국민에게 연 100만원을 소멸성 지역화폐로 지급하겠다
+    date: '2021-07-22'
+    venue: 국회 기자회견 / 아주경제 기자회견 전문
+    source_url: https://www.ajunews.com/view/20210722103830976
+    verified_at: '2026-11-09'
+    verified_by: agent
+    verification_method: 기사 원문 인용문 및 날짜 대조. 사람 최종 검수 아님.
+  current:
+    text: 재정이 많이 소요되는 공약들은 제가 하지 말라고 해서 많이 뺐습니다. 예를 들면 기본소득 공약이나 이런 건 빠져 있겠죠.
+    segment_index: 4
+    date: '2025-05-28'
+    source_url: https://ichannela.com/news/detail/amp/000000475118.do
+    expected_relation: position_change
+    context: 2021년에는 다음 정부 임기 내 지급을 공약했다. 2025년 대선에서는 재정 부담을 이유로 기본소득 공약을 제외했다는 설명이다.
+      다른 선거의 공약 범위 변화이며 정책의 영구 폐기를 뜻하지 않는다.
