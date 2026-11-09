@@ -1,13 +1,28 @@
-# 팩트콕 · 발언 비교 데모
+# Factkok · Statement Comparison Demo
 
-인물을 선택해 영상을 재생하면 같은 사람의 과거 발언을 날짜와 원문 링크와 함께 비교한다. gbrain에서 기록을 검색하고 Codex의 OpenAI 모델로 관계를 판정한다. 입장 변화는 거짓말 판정이 아니다.
+**English** | [한국어](README.ko.md)
 
-[![90초 시연 영상 · 무음 — YouTube에서 재생](https://img.youtube.com/vi/3o-WRERS_u8/hqdefault.jpg)](https://youtu.be/3o-WRERS_u8)
+Choose a public figure and play a video to compare their statements with earlier remarks from the same person, with dates and links to original sources. gbrain retrieves the records, and an OpenAI model via Codex assesses how the statements relate. A change in position is not a finding that someone lied.
 
-- 데모 설명·실행법: [demo/live-contradiction/README.md](demo/live-contradiction/README.md)
-- 테스트: `uv run --extra dev pytest tests -q`
-- UI 회귀: `node --test demo/live-contradiction/web/model.test.mjs`
-- 제출 문구: [docs/SUBMISSION.md](docs/SUBMISSION.md)
-- 검증 범위: [docs/DEMO_VERIFICATION.md](docs/DEMO_VERIFICATION.md)
+[![90-second demo · silent — Watch on YouTube](https://img.youtube.com/vi/3o-WRERS_u8/hqdefault.jpg)](https://youtu.be/3o-WRERS_u8)
 
-이 저장소는 2026-11-09 해커톤에서 새로 만든 부분만 담는다. `korean_politics_news_engine/`은 팩트콕 비공개 엔진에서 데모가 쓰는 함수만 옮긴 것이다(`embeddings.py` 전체, `youtube_factcheck.py`의 Codex 실행 함수).
+## Run locally
+
+Run from a Git checkout with Python 3.11+, uv, gbrain, a logged-in Codex CLI, and FFmpeg/ffprobe. Preparing the videos also requires FFmpeg's `drawtext` filter and a Korean font.
+
+```bash
+uv sync --extra dev
+uv run python demo/live-contradiction/start_demo.py --prepare-media
+```
+
+Open [localhost:8765](http://127.0.0.1:8765). Omit `--prepare-media` on subsequent runs once the videos are ready. The demo uses recorded video and aligned transcripts; it does not perform live speech recognition.
+
+## Resources
+
+- [Detailed setup and demo guide](demo/live-contradiction/README.md) (Korean)
+- Python tests: `uv run --extra dev pytest tests -q`
+- UI state tests: `node --test demo/live-contradiction/web/model.test.mjs`
+- [Submission draft](docs/SUBMISSION.md) (Korean)
+- [Verification scope and results](docs/DEMO_VERIFICATION.md) (Korean)
+
+This repository contains the work created for the November 9, 2026 hackathon. `korean_politics_news_engine/` contains only the parts of Factkok's private engine used by this demo: `embeddings.py` and the Codex execution helper from `youtube_factcheck.py`.
