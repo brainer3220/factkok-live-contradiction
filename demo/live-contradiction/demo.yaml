@@ -1,0 +1,44 @@
+# 데모 설정. holder는 이 파일 한 곳에만 둔다.
+# 아래는 가상 인물 샘플이다. 실제 발표 전에 CANDIDATES.md를 대조해 교체하고 verified_at을 기록한다.
+holder: 가상 의원 김예시
+video: demo.mp4
+store: gbrain        # gbrain | memory(로컬 대체, 화면에 표시됨). 실행 중에는 바뀌지 않는다
+judge: codex         # codex(기본, Codex 로그인 사용량) | openai(OPENAI_API_KEY 필요)
+judge_model: anthropic/claude-sonnet-5-5   # 측정 10~30초/판정, 편차 큼 (2026-11-09)
+judge_effort: low
+judge_timeout: 60
+threshold: 0.7
+statements:
+  - statement_id: s1
+    topic: 국토보유세
+    past:
+      text: 국토보유세를 반드시 도입하겠습니다. 세수 전액을 기본소득으로 돌려드리겠습니다.
+      date: "2025-03-12"
+      venue: 가상 국회 기자회견
+      source_url: https://example.com/sample/s1
+      verified_at: null
+    current:
+      text: 국민 여러분이 반대하시면 국토보유세는 하지 않겠습니다.
+      segment_index: 1
+  - statement_id: s2
+    topic: 금융투자소득세
+    past:
+      text: 금융투자소득세 폐지는 부자 감세입니다. 예정대로 시행해야 합니다.
+      date: "2025-06-03"
+      venue: 가상 TV토론
+      source_url: https://example.com/sample/s2
+      verified_at: null
+    current:
+      text: 아쉽지만 금융투자소득세 폐지에 동의하기로 했습니다.
+      segment_index: 3
+  - statement_id: s3
+    topic: 지역화폐
+    past:
+      text: 지역화폐 예산은 전액 삭감해야 합니다. 효과가 검증되지 않았습니다.
+      date: "2025-09-20"
+      venue: 가상 예산결산특별위원회
+      source_url: https://example.com/sample/s3
+      verified_at: null
+    current:
+      text: 지역화폐 예산을 두 배로 늘려 골목상권을 살리겠습니다.
+      segment_index: 5
