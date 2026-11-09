@@ -4,7 +4,9 @@
 
 Choose a public figure and play a video to compare their statements with earlier remarks from the same person, with dates and links to original sources. gbrain retrieves the records, and an OpenAI model via Codex assesses how the statements relate. A change in position is not a finding that someone lied.
 
-[![90-second demo · silent — Watch on YouTube](https://img.youtube.com/vi/3o-WRERS_u8/hqdefault.jpg)](https://youtu.be/3o-WRERS_u8)
+[![Watch the demo on YouTube](https://img.youtube.com/vi/e7cd_2SQ6Ks/hqdefault.jpg)](https://youtu.be/e7cd_2SQ6Ks)
+
+[Previous demo · 90 seconds, silent](https://youtu.be/3o-WRERS_u8)
 
 ## Run locally
 
